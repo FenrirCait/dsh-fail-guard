@@ -1,6 +1,6 @@
 {
   "name": "dsh-fail-guard",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Stop the agent when it keeps failing: after N consecutive failures on the same tool, push a four-part stop instruction so it reports instead of trying again.",
   "type": "module",
   "main": "index.js",
@@ -10,9 +10,10 @@
     "url": "git+https://github.com/FenrirCait/dsh-fail-guard.git"
   },
   "files": [
-    "index.js",
+    "README.md",
+    "README.zh.md",
     "cordis.patch.yml",
-    "README.md"
+    "index.js"
   ],
   "keywords": [
     "dsh-plugin",

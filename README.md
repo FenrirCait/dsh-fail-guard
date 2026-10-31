@@ -1,5 +1,7 @@
 # dsh-fail-guard
 
+English | [中文](README.zh.md)
+
 Stops the agent when it keeps failing.
 
 After N consecutive failures on the same tool, it pushes a four-part stop instruction into the
@@ -29,6 +31,12 @@ dsh plugin --profile desktop add dsh-fail-guard
 Restart DSH once. `cordis.patch.yml` is applied automatically through the `dsh.bundle` manifest.
 
 ## Configuration
+
+**There is no settings panel for this plugin, and that is expected.** DSH renders a
+configuration form only for plugins that ship a `dsh.client` bundle (a client-side module);
+`dsh-fail-guard` is a server-side plugin only, so its detail page shows just the enable switch,
+the version and the source. Edit `cordis.patch.yml` instead — the fields are `.volatile()`, so a
+change is hot-reloaded and needs no restart.
 
 All options have defaults; the plugin works with an empty config.
 
