@@ -1,6 +1,6 @@
 {
   "name": "dsh-fail-guard",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Stop the agent when it keeps failing: after N consecutive failures on the same tool, push a four-part stop instruction so it reports instead of trying again.",
   "type": "module",
   "main": "index.js",
