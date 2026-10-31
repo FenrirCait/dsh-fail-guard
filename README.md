@@ -38,7 +38,8 @@ All options have defaults; the plugin works with an empty config.
 | `sameToolOnly` | `true` | Count failures per tool. `false` counts any failure toward the same streak. |
 | `stopText` | built in | The instruction that gets pushed. Override to change the wording. |
 | `stopSummary` | built in | One-line summary shown in the panel notice. |
-| `debug` | `false` | Log each failure and each trip to the console. |
+| `debug` | `false` | Write every event, count and trip to a log file. |
+| `logFile` | `<plugin dir>/fail-guard.log` | Where `debug` writes. The Electron main-process console is not readable from anywhere, so a file is the only way to see what the plugin actually received. |
 
 Override in `cordis.patch.yml`:
 
