@@ -1,0 +1,36 @@
+{
+  "name": "dsh-fail-guard",
+  "version": "0.1.0",
+  "description": "Stop the agent when it keeps failing: after N consecutive failures on the same tool, push a four-part stop instruction so it reports instead of trying again.",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FenrirCait/dsh-fail-guard.git"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "deepseek-harness",
+    "thinking",
+    "loop-guard",
+    "agent-loop"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/dsh-agent": ">=0.2.1-0 <0.3.0-0",
+    "@deepseek-ai/dsh-llm": ">=0.2.1-0 <0.3.0-0",
+    "@deepseek-ai/schemastery": "^3.18.5"
+  }
+}
