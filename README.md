@@ -2,25 +2,15 @@
 
 English | [中文](README.zh.md)
 
-Stops the agent when it keeps failing.
+Stops the agent when it keeps failing on the same tool: after N consecutive failures it pushes a four-part stop instruction (what it tried / the full error text / the first guess at why / what you need to do) so it reports instead of trying a fourth way to spell the same command.
 
-After N consecutive failures on the same tool, it pushes a four-part stop instruction into the
-conversation — what you tried, the exact error text, the first guess at why, what you need from
-the user — so the agent reports instead of trying a fourth variation of the same command.
+## Why it has to come from outside
 
-## What it actually treats
+Repeated short lines in reasoning ("Do it. Do it.") are usually not model degradation — they are the residue of **consecutive failure**: the same thing fails, the parameters change, it fails again, nothing new comes in, so the same "time to act" decision gets re-made over and over.
 
-Thinking-loop repetition ("做。做。做。", "Let me… Let me…") usually is not model degradation.
-It is **consecutive trial and error**: the same thing fails, the parameters change, it fails
-again, no new information arrives, and the same "time to act" decision gets re-made over and over.
+Prompt-level rules ("stop after two consecutive failures") do not work in that state — **the model is not reading the prompt then, it is reading its own thinking.** The interruption has to come from outside.
 
-Measured on one 74-turn session (2026-10-30): short-phrase line share stayed in the 7–48% band
-for 67 turns, then jumped to 81.6% the moment a browser-scrolling task started failing repeatedly,
-and stayed at 85.9% / 89.1% / 91.4% afterwards.
-
-A prompt-level rule ("stop after two consecutive failures") does not work in that state, because
-the model is not reading the prompt at that moment — it is reading its own thinking. The
-interruption has to come from outside. That is what this plugin does.
+Measured on a 74-turn session: turns 1–67 kept the share of short single-line fragments between 7% and 48%; the moment a task hit a dozen consecutive failed steps it jumped to 81.6%, then 85.9% / 89.1% / 91.4%.
 
 ## Install
 
@@ -28,59 +18,39 @@ interruption has to come from outside. That is what this plugin does.
 dsh plugin --profile desktop add dsh-fail-guard
 ```
 
-Restart DSH once. `cordis.patch.yml` is applied automatically through the `dsh.bundle` manifest.
+Restart once. `cordis.patch.yml` is applied through the `dsh.bundle` manifest — no need to edit your profile config.
 
 ## Configuration
 
-**Configuration lives in Plugins → dsh-fail-guard → details.** All six options have defaults, so an empty config works; every field is `.volatile()`, so **saving applies immediately without a restart**.
-
-Editing `cordis.patch.yml` directly does the same thing.
-
-All options have defaults; the plugin works with an empty config.
+Edit it in **Plugins → dsh-fail-guard → details**. Fields are marked `.volatile()`: **saving takes effect immediately, no restart.**
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `threshold` | `2` | Consecutive failures before the stop instruction is pushed. |
-| `sameToolOnly` | `true` | Count failures per tool. `false` counts any failure toward the same streak. |
-| `stopText` | built in | The instruction that gets pushed. Override to change the wording. |
-| `stopSummary` | built in | One-line summary shown in the panel notice. |
-| `debug` | `false` | Write every event, count and trip to a log file. |
-| `logFile` | `<plugin dir>/fail-guard.log` | Where `debug` writes. The Electron main-process console is not readable from anywhere, so a file is the only way to see what the plugin actually received. |
+| `threshold` | `2` | Consecutive failures before stopping |
+| `sameToolOnly` | `true` | Count per tool; turn off to share one counter across all tools |
+| `stopText` | built in | The instruction pushed into the conversation |
+| `stopSummary` | built in | The one-line summary shown in the panel |
+| `debug` | `false` | Write events, counts and trips to a log file |
+| `logFile` | `<plugin dir>/fail-guard.log` | Where `debug` writes |
 
-Override in `cordis.patch.yml`:
+Or set it directly in `cordis.patch.yml`:
 
 ```yaml
 - id: dsh-fail-guard
   config:
     threshold: 3
-    sameToolOnly: true
 ```
 
-## How failure is detected
+## What counts as a failure
 
-A `tool/result` counts as a failure when either is true:
+A `tool/result` counts if either holds: `message.isError === true`, or `meta.opsShell.exitCode` exists and is non-zero. Both are needed — a shell command exiting 1 is not marked `isError`, and some tool-level errors carry no exit code. Counters are per session and per tool, and any success resets them.
 
-- `message.isError === true`
-- `meta.opsShell.exitCode` is present and non-zero
+## Limits
 
-Both are checked because neither is complete on its own: a shell command that exits 1 is not
-marked `isError`, and some tool-level errors carry no exit code.
-
-The counter is per session and per tool, and clears on any success.
-
-## Why `steer` and not `inject`
-
-`inject` only shows a notice in the panel — it does not change what the model does next.
-`steer` enters the inbox and is claimed by the next step. This is the same interface choice
-`dsh-huanqi` documents.
-
-## What it does not do
-
-- It does not stop the tool call that just failed — that already happened.
-- It does not judge whether a failure was "real"; any non-zero exit counts.
-- It does not reset the conversation. The stop instruction is one extra user turn, nothing more.
-- It is not a rate limiter. If the agent keeps failing after the instruction, the streak restarts
-  and it will be stopped again `threshold` failures later.
+- It does not abort the call that just failed — that already happened
+- It does not judge whether a failure is "real"; any non-zero exit counts
+- It does not reset the conversation; the stop instruction is just one more user message
+- It is not a rate limiter: after a trip, further failures start counting again and will trip again at the threshold
 
 ## License
 
