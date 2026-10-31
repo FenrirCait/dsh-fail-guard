@@ -32,11 +32,9 @@ Restart DSH once. `cordis.patch.yml` is applied automatically through the `dsh.b
 
 ## Configuration
 
-**There is no settings panel for this plugin, and that is expected.** DSH renders a
-configuration form only for plugins that ship a `dsh.client` bundle (a client-side module);
-`dsh-fail-guard` is a server-side plugin only, so its detail page shows just the enable switch,
-the version and the source. Edit `cordis.patch.yml` instead — the fields are `.volatile()`, so a
-change is hot-reloaded and needs no restart.
+**Configuration lives in Plugins → dsh-fail-guard → details.** All six options have defaults, so an empty config works; every field is `.volatile()`, so **saving applies immediately without a restart**.
+
+Editing `cordis.patch.yml` directly does the same thing.
 
 All options have defaults; the plugin works with an empty config.
 

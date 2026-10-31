@@ -26,7 +26,9 @@ dsh plugin --profile desktop add dsh-fail-guard
 
 ## 配置
 
-**这个插件没有图形设置面板，这是正常的。** DSH 只对带 `dsh.client` 前端模块的插件渲染配置表单；`dsh-fail-guard` 是纯服务端插件，所以它的详情页只有启用开关、版本和来源。配置请改 `cordis.patch.yml`——这些字段是 `.volatile()` 的，改动会热更新，**不需要重启**。
+**配置在「插件 → dsh-fail-guard → 详情」里。** 六个参数都有默认值，空配置也能跑；字段标了 `.volatile()`，**保存即生效，不用重启**。
+
+也可以直接写 `cordis.patch.yml`，效果一样。
 
 所有选项都有默认值，空配置也能跑。
 
