@@ -1,57 +1,53 @@
 # dsh-fail-guard
 
-English | [中文](README.zh.md)
+[中文](README.zh.md)
 
-Stops the agent when it keeps failing on the same tool: after N consecutive failures it pushes a four-part stop instruction (what it tried / the full error text / the first guess at why / what you need to do) so it reports instead of trying a fourth way to spell the same command.
+Standalone DeepSeek Harness protection against repeated tool failures and repetitive reasoning. One installation, one Cordis entry, one configuration form. Neither legacy guard is required.
 
-## Why it has to come from outside
+## Install from dshmarket
 
-Repeated short lines in reasoning ("Do it. Do it.") are usually not model degradation — they are the residue of **consecutive failure**: the same thing fails, the parameters change, it fails again, nothing new comes in, so the same "time to act" decision gets re-made over and over.
+Use the existing **FenrirCait/dsh-fail-guard** entry in dshmarket and subscribe/install it. Follow the market's reload or restart prompt for the selected DSH profile. No second guard package or manual Cordis configuration is needed.
 
-Prompt-level rules ("stop after two consecutive failures") do not work in that state — **the model is not reading the prompt then, it is reading its own thinking.** The interruption has to come from outside.
-
-Measured on a 74-turn session: turns 1–67 kept the share of short single-line fragments between 7% and 48%; the moment a task hit a dozen consecutive failed steps it jumped to 81.6%, then 85.9% / 89.1% / 91.4%.
-
-## Install
+The generated catalog currently maps this entry to the prebuilt npm package. Its install command is:
 
 ```sh
 dsh plugin --profile desktop add dsh-fail-guard
 ```
 
-Restart once. `cordis.patch.yml` is applied through the `dsh.bundle` manifest — no need to edit your profile config.
+A new release must also be published to that npm package for the mapped market subscription to receive it; pushing Git alone does not update the npm distribution. When using the GitHub source directly instead:
 
-## Configuration
-
-Edit it in **Plugins → dsh-fail-guard → details**. Fields are marked `.volatile()`: **saving takes effect immediately, no restart.**
-
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `threshold` | `2` | Consecutive failures before stopping |
-| `sameToolOnly` | `true` | Count per tool; turn off to share one counter across all tools |
-| `stopText` | built in | The instruction pushed into the conversation |
-| `stopSummary` | built in | The one-line summary shown in the panel |
-| `debug` | `false` | Write events, counts and trips to a log file |
-| `logFile` | `<plugin dir>/fail-guard.log` | Where `debug` writes |
-
-Or set it directly in `cordis.patch.yml`:
-
-```yaml
-- id: dsh-fail-guard
-  config:
-    threshold: 3
+```sh
+dsh plugin --profile desktop add github:FenrirCait/dsh-fail-guard
 ```
 
-## What counts as a failure
+This repository includes prebuilt host and browser files in `lib/`; subscribers do not need to run a build or install development dependencies. Keep those generated files in the Git commit when preparing an update. The package declares its single Cordis entry through `dsh.bundle.patch`. Verified host baseline: DSH 0.2.2-rc.5; other versions within the declared peer ranges have not all been tested.
 
-A `tool/result` counts if either holds: `message.isError === true`, or `meta.opsShell.exitCode` exists and is non-zero. Both are needed — a shell command exiting 1 is not marked `isError`, and some tool-level errors carry no exit code. Counters are per session and per tool, and any success resets them.
+## Settings
 
-## Limits
+Open **Plugins → dsh-fail-guard → Details**. The new entry is `dsh-fail-guard-standalone`; older settings are not loaded or migrated.
 
-- It does not abort the call that just failed — that already happened
-- It does not judge whether a failure is "real"; any non-zero exit counts
-- It does not reset the conversation; the stop instruction is just one more user message
-- It is not a rate limiter: after a trip, further failures start counting again and will trip again at the threshold
+- Tool failure: enabled by default. Three consecutive matched failures by the same tool in one turn trigger a notice, not a forced cancellation.
+- Repetition: enabled by default. Five consecutive matching eligible reasoning lines within a block can cut a stream. It does not rewrite answer text.
+- Automatic resume: off by default. When enabled, at most one resume is requested per turn, and it never overrides a failure notice.
 
-## License
+Observe-only mode is off by default. When enabled, detections appear in the turn footer without cutting the stream, steering the model, or requesting a resume. The footer records only the turn, rule, count and action. Streams with more than 64 active blocks are passed through without further checks.
 
-MIT
+### Short-fragment observation (experimental)
+
+Under **Experimental features**, enable the short-fragment experiment and save. It is off by default and independent of both the existing repetition guard and its observe-only mode. Dense repeated fragments, including alternating, cross-block, and run-on fragments, can produce one counter-only summary per turn. The experiment never steers, cuts, resumes, saves text or hashes, or writes an automatic diagnostic report.
+
+This rule is for calibration, not comprehensive loop detection. Overlong lines or excess active blocks stop observation without changing the stream. A line without a newline is evaluated when its reasoning block closes. Self-check still covers the two original guards only.
+
+### Other experiments
+
+All four switches default to off and are independent. Fuzzy repetition observes nearby, nearly identical complete reasoning lines. Cross-turn failure counts adjacent failed turns for the same tool and arguments, within a two-minute window; success, a changed operation, or missing evidence breaks the streak. Simulated stop only records repeated failures in one turn and never cancels a call or turn. Active steering queues at most one guide after an existing exact repetition cut; observe-only suppresses it, and legacy automatic resume takes precedence. Queued does not mean delivered or recovered. Experimental summaries contain no raw arguments or operation fingerprints.
+
+### Local feedback
+
+In a completed turn, open **Guard diagnostics → Mark guard feedback** and select one rule. A recorded hit can be marked correct or as a false positive. A rule with no available hit record can be reported as a false negative; that does not establish whether the rule was enabled or ran, and any enablement answer is self-reported. Preview the JSON, optionally omit the exporting plugin version and recorded count/action, and explicitly download it to decide whether to share. The feedback file does not contain conversation content, session identifiers, or notes. No automatic upload; the existing manual and automatic diagnostic formats are unchanged.
+
+## Evaluate or roll back
+
+Use DSH 0.2.2-rc.5 and a sandbox profile. Back up its package manifest, lockfile and profile patch. Install the local archive with `dsh plugin --profile sandbox add <archive.tgz>` and restart that profile. Do not run the standalone legacy repeat package alongside it. To roll back, reinstall the previous archive, restore the sandbox configuration snapshot if changed, and restart.
+
+Build with Node.js 24: `npm ci`, `npm test`, `npm pack`. See [design references](REFERENCES.md).

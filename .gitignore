@@ -1,5 +1,3 @@
 node_modules/
-*.log
-*.log.bak*
-*.bak-*
-.DS_Store
+*.tgz
+# Prebuilt lib/ is committed so market installs do not require a local build.
